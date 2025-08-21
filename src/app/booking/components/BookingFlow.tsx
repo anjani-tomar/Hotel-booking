@@ -310,24 +310,8 @@ export default function BookingFlow() {
 
           {step === 2 && (
             <PaymentInformation
-              paymentMethod={formData.paymentMethod}
-              setPaymentMethod={setPaymentMethod}
-              cardName={formData.cardName}
-              setCardName={setCardName}
-              cardNumber={formData.cardNumber}
-              setCardNumber={setCardNumber}
-              cardExpiry={formData.cardExpiry}
-              setCardExpiry={setCardExpiry}
-              cardCvv={formData.cardCvv}
-              setCardCvv={setCardCvv}
-              paymentMethodError={errors.paymentMethod || ''}
-              cardNameError={errors.cardName || ''}
-              cardNumberError={errors.cardNumber || ''}
-              cardExpiryError={errors.cardExpiry || ''}
-              cardCvvError={errors.cardCvv || ''}
               onBack={() => setStep(1)}
               onSubmit={submitBooking}
-              isSubmitDisabled={Boolean(errors.paymentMethod || errors.cardName || errors.cardNumber || errors.cardExpiry || errors.cardCvv) || holdSeconds === 0 || !datesConfirmed}
             />
           )}
 

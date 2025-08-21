@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { ensureSchema, query } from "@/lib/db";
 
-interface Params {
-  params: { bookingId: string };
-}
-
-export async function PUT(_req: Request, { params }: Params) {
+export async function PUT(req: Request) {
   try {
     await ensureSchema();
-    const { bookingId } = params;
+    const url = new URL(req.url);
+    const parts = url.pathname.split("/").filter(Boolean);
+    // Expecting path: /api/booking/[bookingId]/confirmPayment
+    const bookingIndex = parts.findIndex((p) => p === "booking");
+    const bookingId = bookingIndex >= 0 && parts.length > bookingIndex + 1 ? parts[bookingIndex + 1] : "";
     if (!bookingId) return NextResponse.json({ error: 'bookingId is required' }, { status: 400 });
 
     // Optionally you could verify latest payment is SUCCESS here

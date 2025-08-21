@@ -3,14 +3,14 @@ import { ensureSchema, query } from "@/lib/db";
 
 export const runtime = 'nodejs';
 
-interface Params {
-  params: { transactionId: string };
-}
-
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(req: Request) {
   try {
     await ensureSchema();
-    const { transactionId } = params;
+    const url = new URL(req.url);
+    const parts = url.pathname.split("/").filter(Boolean);
+    // Expecting path: /api/payment/status/[transactionId]
+    const statusIndex = parts.findIndex((p) => p === "status");
+    const transactionId = statusIndex >= 0 && parts.length > statusIndex + 1 ? parts[statusIndex + 1] : "";
     if (!transactionId) return NextResponse.json({ error: 'transactionId is required' }, { status: 400 });
 
     const { rows } = await query<{ status: string; booking_id: string }>(
