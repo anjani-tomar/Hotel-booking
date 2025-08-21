@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface CustomerInformationProps {
   firstName: string;
@@ -32,6 +32,19 @@ export default function CustomerInformation({
 }: CustomerInformationProps) {
   const [hasSavedProfile, setHasSavedProfile] = useState(false);
   const [savedPreview, setSavedPreview] = useState<{ firstName: string; lastName: string; email: string; phone: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Base URL for Express backend or fallback to Next API
+  const apiBase = useMemo(() => {
+    const env = process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, '');
+    if (env) return env;
+    if (typeof window !== 'undefined') {
+      const { protocol, hostname } = window.location;
+      return `${protocol}//${hostname}:4000/api`;
+    }
+    return '/api';
+  }, []);
 
   useEffect(() => {
     try {
@@ -77,6 +90,33 @@ export default function CustomerInformation({
       onIdImageChange(file);
     }
   };
+
+  async function saveLeadGuest() {
+    setSubmitError(null);
+    try {
+      setSubmitting(true);
+      const payload = {
+        firstName: firstName?.trim(),
+        lastName: lastName?.trim(),
+        email: email?.trim(),
+        phone: phone?.trim(),
+        idImageUrl: idImageUrl || null,
+      };
+      const res = await fetch(`${apiBase}/lead-guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || 'Failed to save');
+      }
+    } catch (e: any) {
+      setSubmitError(e?.message || 'Unable to save');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <section className="rounded-xl border border-white/10 bg-white/5 p-6">
@@ -179,12 +219,16 @@ export default function CustomerInformation({
 
       <div className="mt-8 flex justify-end">
         <button
-          onClick={onNext}
-          className="px-6 py-3 bg-[#ffb900] hover:bg-[#e6a500] text-black font-medium rounded-md transition-colors"
+          onClick={async () => { await saveLeadGuest(); onNext(); }}
+          disabled={submitting}
+          className="px-6 py-3 bg-[#ffb900] hover:bg-[#e6a500] disabled:opacity-50 text-black font-medium rounded-md transition-colors"
         >
           Continue to Payment
         </button>
       </div>
+      {submitError && (
+        <p className="mt-3 text-sm text-red-400">{submitError}</p>
+      )}
     </section>
   );
 }
